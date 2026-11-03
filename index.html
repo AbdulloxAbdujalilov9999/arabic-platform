@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arabic Foundations</title>
+<meta name="description" content="A personal, zero-to-Qur'an Arabic course with an AI teacher.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B5345" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10231C" media="(prefers-color-scheme: dark)">
+<script>try{ var t=localStorage.getItem("ar_theme"); if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t); }catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="authRoot"></div>
+
+<div id="appShell" hidden>
+  <header class="topbar">
+    <button class="icon-btn" id="menuBtn" aria-label="Menu" style="display:none" title="Menu">&#9776;</button>
+    <div class="brand"><span class="glyph">&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</span> Arabic Foundations</div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">&#9681;</button>
+      <button class="icon-btn" id="signOutBtn" title="Sign out">&#9099;</button>
+    </div>
+  </header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar"><div id="sidebarNav"></div></nav>
+    <main id="app"></main>
+  </div>
+</div>
+
+<div id="teacherPanel"></div>
+<div id="toast" class="toast"></div>
+
+<script src="curriculum.js"></script>
+<script type="module" src="app.js"></script>
+<style>
+  @media (max-width: 860px){ #menuBtn{ display:flex !important; } }
+</style>
+</body>
+</html>

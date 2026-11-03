@@ -45,6 +45,10 @@
 }
 
 *{ box-sizing: border-box; }
+/* An ID selector like #authRoot{display:flex} otherwise beats the UA stylesheet's
+ * [hidden]{display:none}, so toggling .hidden via JS silently stops working the moment
+ * any selector gives that element its own `display`. Force it back with !important. */
+[hidden]{ display:none !important; }
 html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); }
 body{ min-height:100vh; -webkit-font-smoothing:antialiased; }
 img{ max-width:100%; }

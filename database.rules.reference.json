@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "This is NOT deployed from here — it's documentation only.",
+    "",
+    "This app shares its Firebase project (truck-talk-admin) with truck-talk-webapp on",
+    "purpose, for one continuous sign-in/progress history. Firebase Realtime Database rules",
+    "are a single full-replace document for the whole project, not per-repo, so this exact",
+    "block is already live (deployed from truck-talk-webapp on 2026-11-03, commit 7bfd5ee,",
+    "before the app moved to its own repo). It is the ONLY piece of this app that still",
+    "lives in Firebase rather than here.",
+    "",
+    "DO NOT run `firebase deploy --only database` from this repo — it has no idea about",
+    "truck-talk-webapp's other rules (users/, progress/, speakup/, liveClasses/, etc.) and",
+    "would silently wipe all of them, since a rules deploy replaces the entire ruleset.",
+    "",
+    "If truck-talk-webapp's own rules are ever redeployed from that repo, this exact block",
+    "needs to be pasted back into its database.rules.json first, or writes here will start",
+    "failing with a permission-denied error (reads/writes to arabic/progress/$uid)."
+  ],
+  "rules": {
+    "arabic": {
+      "progress": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    }
+  }
+}

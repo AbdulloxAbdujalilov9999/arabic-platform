@@ -19,9 +19,10 @@ export const firebaseConfig = {
   appId: "1:255238093542:web:4cfb42bdf8e1b0b7dd9927",
 };
 
-/* The single owner account. Auto-approved as "owner" on first sign-in,
- * bypassing the request queue. Also checked independently in
- * database.rules.json — that server-side copy is the real security
- * boundary, this one is just so the client UI knows to skip the request
- * screen. */
-export const OWNER_EMAIL = "abdujalilov7707@gmail.com";
+/* Accounts allowed into this private app. Checked here (client UI gate) and
+ * independently in api/_auth.js (the real security boundary for the AI
+ * teacher/voice endpoints — this copy alone wouldn't stop anyone, since
+ * it's just client-side JS). database.rules.json doesn't list emails at
+ * all; it's scoped per signed-in uid, so any signed-in account already
+ * only ever sees its own progress regardless of this list. */
+export const ALLOWED_EMAILS = ["abdujalilov7707@gmail.com", "saidamusaxonova9@gmail.com"];

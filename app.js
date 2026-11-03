@@ -6,7 +6,7 @@
  * deployment from truck-talk-webapp.
  */
 import { auth, db, googleProvider, isFirebaseConfigured, usesRedirectSignIn } from "./shared/firebase.js";
-import { OWNER_EMAIL } from "./shared/firebase-config.js";
+import { ALLOWED_EMAILS } from "./shared/firebase-config.js";
 import {
   onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -86,7 +86,7 @@ function renderDenied(email) {
   const card = el("div", { class: "signin-card" },
     el("div", { class: "glyph" }, "معذرة"),
     el("h1", {}, "This app is private"),
-    el("p", { class: "signin-denied" }, "Signed in as " + (email || "this account") + ". This course is just for its owner."),
+    el("p", { class: "signin-denied" }, "Signed in as " + (email || "this account") + ". This course is private — ask the owner if you think you should have access."),
     el("button", { class: "btn btn-ghost", onclick: () => signOut(auth) }, "Sign out"),
   );
   $("#authRoot").replaceChildren(card);
@@ -106,7 +106,7 @@ function boot() {
   if (usesRedirectSignIn) getRedirectResult(auth).catch((err) => renderSignIn(err && err.message));
   onAuthStateChanged(auth, (user) => {
     if (!user) { currentUser = null; renderSignIn(""); return; }
-    if (user.email !== OWNER_EMAIL) { currentUser = null; renderDenied(user.email); return; }
+    if (!ALLOWED_EMAILS.includes(user.email)) { currentUser = null; renderDenied(user.email); return; }
     currentUser = user;
     $("#authRoot").hidden = true;
     mountApp();
@@ -354,16 +354,138 @@ function renderTajweed() {
   wrap.append(el("div", { class: "sound-desc" }, el("strong", {}, "Moon: "), ...LETTERS.filter((l) => l.moon).map((l) => l.letter + " ")));
   return wrap;
 }
-function renderWords() {
-  const wrap = el("div", { class: "card-grid" });
-  for (const L of LETTERS) {
-    const reveal = el("div", { class: "meaning", hidden: "" }, L.example.translit + " — " + L.example.meaning);
-    const btn = el("button", { class: "btn btn-ghost", style: "margin-top:8px;font-size:12px;padding:6px 10px", onclick: (e) => { reveal.hidden = !reveal.hidden; e.currentTarget.textContent = reveal.hidden ? "Reveal" : "Hide"; } }, "Reveal");
-    wrap.append(el("div", { class: "flashcard" },
-      el("div", { class: "big-letter", style: "font-size:40px" }, L.example.word),
-      el("div", { style: "text-align:center;margin:8px 0" }, playBtn(L.example.word)),
-      el("div", { style: "text-align:center" }, reveal, btn)));
+/* ---------------- Reading practice: words, phrases, and live Qur'an text ---------------- */
+const TWO_LETTER_WORDS = [
+  { word: "لَا", translit: "lā", meaning: "no" },
+  { word: "مَا", translit: "mā", meaning: "what" },
+  { word: "فِي", translit: "fī", meaning: "in" },
+  { word: "لِي", translit: "lī", meaning: "to me / mine" },
+  { word: "مَنْ", translit: "man", meaning: "who" },
+  { word: "هَلْ", translit: "hal", meaning: "is it / does" },
+];
+const THREE_LETTER_WORDS = [
+  { word: "وَلَد", translit: "walad", meaning: "boy / child" },
+  { word: "بِنْت", translit: "bint", meaning: "girl" },
+  { word: "سَلَام", translit: "salām", meaning: "peace" },
+  { word: "مُعَلِّم", translit: "mu’allim", meaning: "teacher" },
+  { word: "كَبِير", translit: "kabīr", meaning: "big" },
+  { word: "جَمِيل", translit: "jamīl", meaning: "beautiful" },
+  { word: "جَدِيد", translit: "jadīd", meaning: "new" },
+];
+const PHRASES = [
+  { word: "بَيْتٌ كَبِيرٌ", translit: "baytun kabīrun", meaning: "a big house" },
+  { word: "قَلَمٌ جَمِيلٌ", translit: "qalamun jamīlun", meaning: "a beautiful pen" },
+  { word: "كِتَابٌ جَدِيدٌ", translit: "kitābun jadīdun", meaning: "a new book" },
+];
+// Shortest-first: good beginner reading order. Al-Fātiḥah is last (longest/hardest of these
+// five) even though it's the single most important surah — by the time it comes up, the
+// other four have already built up some reading confidence.
+const SURAHS = [
+  { number: 108, name: "Al-Kawthar" },
+  { number: 112, name: "Al-Ikhlāṣ" },
+  { number: 113, name: "Al-Falaq" },
+  { number: 114, name: "An-Nās" },
+  { number: 1, name: "Al-Fātiḥah" },
+];
+
+function wordCard(entry) {
+  const reveal = el("div", { class: "meaning", hidden: "" }, entry.translit + " — " + entry.meaning);
+  const btn = el("button", { class: "btn btn-ghost", style: "margin-top:8px;font-size:12px;padding:6px 10px",
+    onclick: (e) => { reveal.hidden = !reveal.hidden; e.currentTarget.textContent = reveal.hidden ? "Reveal" : "Hide"; } }, "Reveal");
+  return el("div", { class: "flashcard" },
+    el("div", { class: "big-letter", style: "font-size:36px" }, entry.word),
+    el("div", { style: "text-align:center;margin:8px 0" }, playBtn(entry.word)),
+    el("div", { style: "text-align:center" }, reveal, btn));
+}
+function wordStage(title, intro, entries) {
+  const wrap = el("div", {});
+  wrap.append(el("h4", {}, title));
+  if (intro) wrap.append(el("p", { class: "sound-desc" }, intro));
+  wrap.append(el("div", { class: "card-grid" }, entries.map(wordCard)));
+  return wrap;
+}
+
+/* Live Qur'an text + real reciter audio (Mishary Alafasy) from api.alquran.cloud — never
+ * hand-typed: Uthmani script has orthographic details (small waw/noon marks, etc.) that
+ * aren't safe to reproduce from memory, so this always fetches the authoritative source. */
+const surahCache = new Map();
+async function fetchSurah(number) {
+  if (surahCache.has(number)) return surahCache.get(number);
+  const r = await fetch("https://api.alquran.cloud/v1/surah/" + number + "/editions/quran-uthmani,en.sahih,en.transliteration,ar.alafasy");
+  if (!r.ok) throw new Error("surah-" + r.status);
+  const j = await r.json();
+  const [uth, en, translit, recite] = j.data;
+  const ayahs = uth.ayahs.map((a, i) => ({
+    number: a.numberInSurah,
+    arabic: a.text.replace(/^﻿/, ""),
+    translation: en.ayahs[i].text,
+    transliteration: translit.ayahs[i].text,
+    audio: recite.ayahs[i].audio,
+  }));
+  const result = { englishName: uth.englishName, meaning: uth.englishNameTranslation, arabicName: uth.name, ayahs };
+  surahCache.set(number, result);
+  return result;
+}
+async function playUrl(url, btn) {
+  if (btn) { btn.disabled = true; btn.dataset.prevHtml = btn.innerHTML; btn.textContent = "⋯"; }
+  try {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    const audio = new Audio(url);
+    currentAudio = audio;
+    await audio.play();
+  } catch (e) {
+    toast("Couldn’t play that audio.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.prevHtml; }
   }
+}
+function playUrlBtn(url) {
+  return el("button", { class: "play-btn", title: "Listen — reciter: Mishary Alafasy", onclick: (e) => playUrl(url, e.currentTarget) }, "▶");
+}
+function ayahCard(ayah) {
+  const reveal = el("div", { class: "meaning", hidden: "" }, ayah.transliteration + " — “" + ayah.translation + "”");
+  const btn = el("button", { class: "btn btn-ghost", style: "font-size:12px;padding:6px 10px",
+    onclick: (e) => { reveal.hidden = !reveal.hidden; e.currentTarget.textContent = reveal.hidden ? "Reveal" : "Hide"; } }, "Reveal");
+  return el("div", { class: "example-word", style: "flex-direction:column;align-items:stretch;gap:10px" },
+    el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:10px" },
+      el("div", { class: "w", style: "font-size:24px;line-height:1.8" }, ayah.arabic),
+      playUrlBtn(ayah.audio)),
+    reveal, btn);
+}
+function renderSurahReader(container, number) {
+  container.replaceChildren(el("div", { class: "empty-note" }, "Loading…"));
+  fetchSurah(number).then((s) => {
+    container.replaceChildren(
+      el("h4", {}, s.englishName + " — “" + s.meaning + "” (" + s.ayahs.length + (s.ayahs.length === 1 ? " ayah" : " ayat") + ")"),
+      ...s.ayahs.map(ayahCard),
+    );
+  }).catch(() => {
+    container.replaceChildren(el("div", { class: "empty-note" }, "Couldn’t load this surah right now — check your connection and try again."));
+  });
+}
+
+function renderWords() {
+  const wrap = el("div", {});
+  wrap.append(el("p", { class: "sound-desc" }, "Reading practice, step by step: short words first, then phrases, then real verses — read live from the Qur’an, with a real reciter’s audio. Try reading each one yourself before pressing play."));
+  wrap.append(wordStage("Two-letter words", "The shortest possible words — mostly tiny, very common ones.", TWO_LETTER_WORDS));
+  wrap.append(wordStage("Words you already know", "The example word from every letter so far, all in one place — no hints this time.", LETTERS.map((L) => ({ word: L.example.word, translit: L.example.translit, meaning: L.example.meaning }))));
+  wrap.append(wordStage("More three-letter words", null, THREE_LETTER_WORDS));
+  wrap.append(wordStage("Simple phrases", "Two words together — a noun and a describing word.", PHRASES));
+  wrap.append(el("h4", {}, "Your first surahs"));
+  wrap.append(el("p", { class: "sound-desc" }, "The same letters and sounds, now in real Qur’an verses — the shortest, most commonly memorized surahs, read live from an authoritative source with audio from reciter Mishary Alafasy."));
+  const tabs = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" });
+  const surahBody = el("div", {});
+  SURAHS.forEach((s, i) => {
+    const tabBtn = el("button", { class: "btn" + (i === 0 ? " btn-primary" : " btn-ghost"), style: "font-size:13px;padding:8px 14px",
+      onclick: (e) => {
+        for (const b of tabs.children) b.className = "btn btn-ghost";
+        e.currentTarget.className = "btn btn-primary";
+        renderSurahReader(surahBody, s.number);
+      } }, s.name);
+    tabs.append(tabBtn);
+  });
+  wrap.append(tabs, surahBody);
+  renderSurahReader(surahBody, SURAHS[0].number);
   return wrap;
 }
 

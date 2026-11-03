@@ -1,6 +1,6 @@
-/* Arabic native-voice endpoint (Vercel serverless function). Owner-only — see _auth.js.
+/* Arabic native-voice endpoint (Vercel serverless function). Allowed-accounts only — see _auth.js.
  *
- *   GET /api/tts?t=<Arabic text>   -> audio/mpeg   (needs the owner's Firebase ID token)
+ *   GET /api/tts?t=<Arabic text>   -> audio/mpeg   (needs a signed-in, allowed account's Firebase ID token)
  *   GET /api/tts?health=1          -> { configured }   (never reveals a key)
  *
  * Unlike api/tts.js (public, but restricted to a fixed, pre-built phrase list because it serves
@@ -14,7 +14,7 @@
  */
 "use strict";
 
-const { checkOwner, makeLimiter } = require("./_auth.js");
+const { checkAllowed, makeLimiter } = require("./_auth.js");
 const LIMITS = { perWindow: 120, windowMs: 10 * 60 * 1000, perDay: 3000 };
 const underLimit = makeLimiter(LIMITS);
 
@@ -51,7 +51,7 @@ async function handler(req, res) {
   const authHeader = String((req.headers && (req.headers.authorization || req.headers.Authorization)) || "");
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   if (!token) return json(res, 401, { error: "sign-in" });
-  const uid = await checkOwner(token, now);
+  const uid = await checkAllowed(token, now);
   if (!uid) return json(res, 403, { error: "not-allowed" });
   if (!underLimit(uid, now)) return json(res, 429, { error: "slow-down" });
 

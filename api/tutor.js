@@ -1,19 +1,19 @@
-/* Arabic AI teacher (Vercel serverless function). Owner-only — see _auth.js.
+/* Arabic AI teacher (Vercel serverless function). Allowed-accounts only — see _auth.js.
  *
  *   GET  /api/tutor?health=1          -> { configured }
- *   POST /api/tutor  { mode, ... }    -> { reply }   (needs the owner's Firebase ID token)
+ *   POST /api/tutor  { mode, ... }    -> { reply }   (needs a signed-in, allowed account's Firebase ID token)
  *       mode "chat":    { messages: [{role, content}], context? }   free teaching conversation, aware of the current lesson
  *       mode "writing": { letter, image }                           vision feedback on a traced/handwritten letter (base64 PNG)
  *
  * This is a personal, single-user course (not the business's trial/approval model), so the only
- * access check is "does this Firebase ID token belong to the owner" — no database read needed.
+ * access check is "is this Firebase ID token one of the allowed accounts" — no database read needed.
  * Cost guards: short inputs, a per-person rate limit (best effort on serverless), and a monthly
  * spend limit set in the Anthropic Console as the hard stop. The key never leaves the server.
  *   ANTHROPIC_API_KEY     required      ARABIC_TUTOR_MODEL   optional (default claude-sonnet-5-5)
  */
 "use strict";
 
-const { checkOwner, makeLimiter } = require("./_auth.js");
+const { checkAllowed, makeLimiter } = require("./_auth.js");
 const LIMITS = { perWindow: 60, windowMs: 10 * 60 * 1000, perDay: 600, message: 1500, messages: 24, total: 16000, context: 300 };
 const underLimit = makeLimiter(LIMITS);
 const MAX_IMAGE_B64 = 2_000_000; // ~1.5MB of raw PNG
@@ -73,7 +73,7 @@ async function handler(req, res) {
   const authHeader = String((req.headers && (req.headers.authorization || req.headers.Authorization)) || "");
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   if (!token) return send(res, 401, { error: "sign-in" });
-  const uid = await checkOwner(token, now);
+  const uid = await checkAllowed(token, now);
   if (!uid) return send(res, 403, { error: "not-allowed" });
   if (!underLimit(uid, now)) return send(res, 429, { error: "slow-down" });
 

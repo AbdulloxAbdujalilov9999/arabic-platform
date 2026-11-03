@@ -140,7 +140,7 @@ const ARABIC_CURRICULUM = [
   { id: 10, kind: "madd", title: "Long Vowels — Madd" },
   { id: 11, kind: "sukun_shadda", title: "Sukūn & Shadda" },
   { id: 12, kind: "tajweed", title: "Tajweed Basics — Heavy Letters, Throat Letters, Qalqalah" },
-  { id: 13, kind: "words", title: "First Words — Reading Practice" },
+  { id: 13, kind: "words", title: "Reading Practice — Words, Phrases & Your First Surahs" },
 ];
 
 if (typeof window !== "undefined") {

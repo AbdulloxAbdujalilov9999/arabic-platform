@@ -133,13 +133,6 @@ main#app{ flex:1; min-width:0; padding:28px 32px; max-width:860px; margin:0 auto
 .drill-table td{ cursor:pointer; }
 .drill-table td:hover{ background:var(--accent-soft); }
 
-/* ---------- Writing practice ---------- */
-.writing-box{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:18px; margin:18px 0; box-shadow:var(--shadow); }
-.writing-box h4{ margin:0 0 10px; font-size:14px; }
-canvas.trace-canvas{ width:100%; max-width:360px; height:180px; display:block; margin:0 auto 12px; border:2px dashed var(--line); border-radius:var(--radius-s); touch-action:none; background:var(--surface); }
-.writing-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-.writing-feedback{ margin-top:12px; font-size:13px; line-height:1.5; background:var(--surface-2); border-radius:var(--radius-s); padding:10px 12px; white-space:pre-wrap; }
-
 /* ---------- Progress footer ---------- */
 .lesson-actions{ display:flex; gap:10px; margin-top:28px; }
 

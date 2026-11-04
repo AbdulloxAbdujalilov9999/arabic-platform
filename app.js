@@ -210,64 +210,6 @@ function letterCard(entry) {
     el("div", { style: "text-align:center;margin-top:10px" }, playBtn(entry.letter, "small")),
   );
 }
-function writingBox(entry) {
-  const canvas = el("canvas", { class: "trace-canvas", width: "360", height: "180" });
-  const ctx = canvas.getContext("2d");
-  function drawGuide() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.direction = "rtl";
-    ctx.font = "120px 'Noto Naskh Arabic', serif";
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--line") || "#ddd";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(entry.letter, canvas.width / 2, canvas.height / 2 + 10);
-    ctx.restore();
-  }
-  drawGuide();
-  let drawing = false, lastX = 0, lastY = 0;
-  function pos(e) {
-    const r = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / r.width, scaleY = canvas.height / r.height;
-    return [(e.clientX - r.left) * scaleX, (e.clientY - r.top) * scaleY];
-  }
-  canvas.addEventListener("pointerdown", (e) => { drawing = true; [lastX, lastY] = pos(e); canvas.setPointerCapture(e.pointerId); });
-  canvas.addEventListener("pointermove", (e) => {
-    if (!drawing) return;
-    const [x, y] = pos(e);
-    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink") || "#111";
-    ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round";
-    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
-    [lastX, lastY] = [x, y];
-  });
-  canvas.addEventListener("pointerup", () => (drawing = false));
-  const feedback = el("div", { class: "writing-feedback", hidden: "" });
-  const checkBtn = el("button", { class: "btn btn-primary", onclick: async () => {
-    checkBtn.disabled = true; checkBtn.textContent = "Checking…";
-    feedback.hidden = true;
-    try {
-      const headers = { "content-type": "application/json", ...(await authHeader()) };
-      const r = await fetch("/api/tutor", {
-        method: "POST", headers,
-        body: JSON.stringify({ mode: "writing", letter: entry.name + " (" + entry.letter + ")", image: canvas.toDataURL("image/png") }),
-      });
-      const data = await r.json();
-      feedback.textContent = data.reply || "Couldn’t check that just now — try again in a moment.";
-    } catch (e) {
-      feedback.textContent = "Couldn’t reach the teacher just now — check your connection and try again.";
-    }
-    feedback.hidden = false;
-    checkBtn.disabled = false; checkBtn.textContent = "Check my writing";
-  } }, "Check my writing");
-  const clearBtn = el("button", { class: "btn btn-ghost", onclick: drawGuide }, "Clear");
-  return el("div", { class: "writing-box" },
-    el("h4", {}, "Trace " + entry.name + " — then try freehand"),
-    canvas,
-    el("div", { class: "writing-actions" }, clearBtn, checkBtn),
-    feedback,
-  );
-}
-
 /* ---------------- Drill tables ---------------- */
 function drillTable(cols, rows) {
   const thead = el("tr", {}, cols.map((c) => el("th", {}, c)));
@@ -355,6 +297,52 @@ function renderTajweed() {
   return wrap;
 }
 /* ---------------- Reading practice: words, phrases, and live Qur'an text ---------------- */
+
+/* Per letters-lesson reading practice: real words built ONLY from letters introduced in this
+ * lesson or earlier ones (cumulative) — so the pool genuinely grows lesson over lesson, same as
+ * the letter-groups in ARABIC_CURRICULUM. Lesson 1 only has 5 letters to work with, so its list
+ * is intentionally thin; by lesson 6 (all 28 letters) there's enough for real variety. */
+const LESSON_READING_WORDS = {
+  1: [ // ا ب ت ث ج (5 letters)
+    { word: "بَاب", translit: "bāb", meaning: "door" },
+  ],
+  2: [ // + ح خ د ذ (9 letters)
+    { word: "تَاج", translit: "tāj", meaning: "crown" },
+    { word: "حُبّ", translit: "ḥubb", meaning: "love" },
+    { word: "جَدّ", translit: "jadd", meaning: "grandfather" },
+    { word: "دَجَاج", translit: "dajāj", meaning: "chicken" },
+  ],
+  3: [ // + ر ز س ش (13 letters)
+    { word: "بَرْد", translit: "bard", meaning: "cold" },
+    { word: "دَرْس", translit: "dars", meaning: "lesson" },
+    { word: "شَجَر", translit: "shajar", meaning: "tree" },
+    { word: "سِرّ", translit: "sirr", meaning: "secret" },
+    { word: "بَحْر", translit: "baḥr", meaning: "sea" },
+  ],
+  4: [ // + ص ض ط ظ (17 letters)
+    { word: "صَبْر", translit: "ṣabr", meaning: "patience" },
+    { word: "صَدْر", translit: "ṣadr", meaning: "chest" },
+    { word: "طَبْخ", translit: "ṭabkh", meaning: "cooking" },
+    { word: "حَظّ", translit: "ḥaẓẓ", meaning: "luck" },
+    { word: "بَصَر", translit: "baṣar", meaning: "eyesight" },
+  ],
+  5: [ // + ع غ ف ق (21 letters)
+    { word: "فَجْر", translit: "fajr", meaning: "dawn (also a prayer name)" },
+    { word: "عَصْر", translit: "ʿaṣr", meaning: "afternoon (also a prayer name)" },
+    { word: "عَرَب", translit: "ʿarab", meaning: "Arab(s)" },
+    { word: "فَرَح", translit: "faraḥ", meaning: "joy" },
+    { word: "غَضَب", translit: "ghaḍab", meaning: "anger" },
+  ],
+  6: [ // + ك ل م ن ه و ي — all 28 letters
+    { word: "كَلْب", translit: "kalb", meaning: "dog" },
+    { word: "قَمَر", translit: "qamar", meaning: "moon" },
+    { word: "نَهْر", translit: "nahr", meaning: "river" },
+    { word: "لَوْن", translit: "lawn", meaning: "color" },
+    { word: "وَجْه", translit: "wajh", meaning: "face" },
+  ],
+};
+const LESSON_LETTER_COUNT = { 1: 5, 2: 9, 3: 13, 4: 17, 5: 21, 6: 28 };
+
 const TWO_LETTER_WORDS = [
   { word: "لَا", translit: "lā", meaning: "no" },
   { word: "مَا", translit: "mā", meaning: "what" },
@@ -376,6 +364,13 @@ const PHRASES = [
   { word: "بَيْتٌ كَبِيرٌ", translit: "baytun kabīrun", meaning: "a big house" },
   { word: "قَلَمٌ جَمِيلٌ", translit: "qalamun jamīlun", meaning: "a beautiful pen" },
   { word: "كِتَابٌ جَدِيدٌ", translit: "kitābun jadīdun", meaning: "a new book" },
+];
+const SENTENCES = [
+  { word: "هَذَا بَيْتٌ كَبِيرٌ", translit: "hādhā baytun kabīrun", meaning: "This is a big house." },
+  { word: "هَذَا كِتَابٌ جَدِيدٌ", translit: "hādhā kitābun jadīdun", meaning: "This is a new book." },
+  { word: "اَلْوَلَدُ فِي الْبَيْتِ", translit: "al-waladu fī al-bayti", meaning: "The boy is in the house." },
+  { word: "اَلْبِنْتُ جَمِيلَةٌ", translit: "al-bintu jamīlatun", meaning: "The girl is beautiful." },
+  { word: "اَلسَّلَامُ عَلَيْكُمْ", translit: "as-salāmu ʿalaykum", meaning: "Peace be upon you — the standard Muslim greeting." },
 ];
 // Shortest-first: good beginner reading order. Al-Fātiḥah is last (longest/hardest of these
 // five) even though it's the single most important surah — by the time it comes up, the
@@ -471,6 +466,7 @@ function renderWords() {
   wrap.append(wordStage("Words you already know", "The example word from every letter so far, all in one place — no hints this time.", LETTERS.map((L) => ({ word: L.example.word, translit: L.example.translit, meaning: L.example.meaning }))));
   wrap.append(wordStage("More three-letter words", null, THREE_LETTER_WORDS));
   wrap.append(wordStage("Simple phrases", "Two words together — a noun and a describing word.", PHRASES));
+  wrap.append(wordStage("Simple sentences", "Whole sentences now — the same words and letters, just put together.", SENTENCES));
   wrap.append(el("h4", {}, "Your first surahs"));
   wrap.append(el("p", { class: "sound-desc" }, "The same letters and sounds, now in real Qur’an verses — the shortest, most commonly memorized surahs, read live from an authoritative source with audio from reciter Mishary Alafasy."));
   const tabs = el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px" });
@@ -544,9 +540,12 @@ function renderMain() {
   app.append(el("div", { class: "lesson-title" }, "Lesson " + lesson.id + ": " + lesson.title));
   app.append(el("div", { class: "lesson-sub" }, progress.completed[lesson.id] ? "Completed — revisit any time." : "Work through it, then mark it done."));
   app.append(renderLessonBody(lesson));
-  if (lesson.kind === "letters") {
-    app.append(el("h4", {}, "Writing practice"));
-    for (const id of lesson.ids) app.append(writingBox(byId(id)));
+  if (lesson.kind === "letters" && LESSON_READING_WORDS[lesson.id]) {
+    const n = LESSON_LETTER_COUNT[lesson.id];
+    const intro = lesson.id === 1
+      ? "Only " + n + " letters so far, so there's just one real word you can already sound out — but it's a real one. More letters, more words, starting next lesson."
+      : "Every word below uses only letters you've learned so far (" + n + " of 28) — try reading each one yourself before revealing it.";
+    app.append(wordStage("Reading practice", intro, LESSON_READING_WORDS[lesson.id]));
   }
   const nextLesson = CURRICULUM.find((l) => l.id === lesson.id + 1);
   const actions = el("div", { class: "lesson-actions" });

@@ -252,6 +252,7 @@ function renderTanween() {
   wrap.append(el("p", { class: "sound-desc" }, "Tanween doubles a short-vowel mark at the end of a word, adding a trailing ‘n’ sound — common on indefinite nouns. Tap any cell to hear it."));
   const rows = LETTERS.map((L) => TANWEEN.map((t) => ({ glyph: L.letter + t.mark, speak: L.letter + t.mark })));
   wrap.append(drillTable(TANWEEN.map((t) => t.name + " (" + t.translit + ")"), rows));
+  wrap.append(wordStage("Reading practice", "Real words ending in tanween — the “-un” you just learned.", TANWEEN_WORDS));
   return wrap;
 }
 function renderMadd() {
@@ -260,6 +261,7 @@ function renderMadd() {
   const rows = LETTERS.filter((l) => !l.nonConnector).map((L) =>
     MADD.map((m) => { const hk = HARAKAT.find((h) => h.id === m.after); const g = L.letter + hk.mark + m.letter; return { glyph: g, speak: g }; }));
   wrap.append(drillTable(MADD.map((m) => m.name + " (" + m.translit + ")"), rows));
+  wrap.append(wordStage("Reading practice", "Real words carrying each of the three long vowels — some you've already met.", MADD_WORDS));
   return wrap;
 }
 function renderSukunShadda() {
@@ -271,6 +273,7 @@ function renderSukunShadda() {
   const shRows = LETTERS.map((L) => [{ glyph: L.letter + SHADDA + "َ", speak: L.letter + SHADDA + "َ" }]);
   wrap.append(el("h4", {}, "Shadda — the doubled sound"));
   wrap.append(drillTable(["Letter + Shadda + Fatha"], shRows));
+  wrap.append(wordStage("Reading practice", "Real words with sukūn and with shadda, side by side.", SUKUN_SHADDA_WORDS));
   return wrap;
 }
 function chipList(entries) {
@@ -311,6 +314,9 @@ const LESSON_READING_WORDS = {
     { word: "حُبّ", translit: "ḥubb", meaning: "love" },
     { word: "جَدّ", translit: "jadd", meaning: "grandfather" },
     { word: "دَجَاج", translit: "dajāj", meaning: "chicken" },
+    { word: "جَاد", translit: "jād", meaning: "generous" },
+    { word: "حَادّ", translit: "ḥādd", meaning: "sharp" },
+    { word: "جَذْب", translit: "jadhb", meaning: "pulling / attraction" },
   ],
   3: [ // + ر ز س ش (13 letters)
     { word: "بَرْد", translit: "bard", meaning: "cold" },
@@ -318,6 +324,12 @@ const LESSON_READING_WORDS = {
     { word: "شَجَر", translit: "shajar", meaning: "tree" },
     { word: "سِرّ", translit: "sirr", meaning: "secret" },
     { word: "بَحْر", translit: "baḥr", meaning: "sea" },
+    { word: "حَرْب", translit: "ḥarb", meaning: "war" },
+    { word: "جِسْر", translit: "jisr", meaning: "bridge" },
+    { word: "حُرّ", translit: "ḥurr", meaning: "free" },
+    { word: "بَشَر", translit: "bashar", meaning: "humankind" },
+    { word: "دَرْب", translit: "darb", meaning: "path" },
+    { word: "زُجَاج", translit: "zujāj", meaning: "glass" },
   ],
   4: [ // + ص ض ط ظ (17 letters)
     { word: "صَبْر", translit: "ṣabr", meaning: "patience" },
@@ -325,6 +337,11 @@ const LESSON_READING_WORDS = {
     { word: "طَبْخ", translit: "ṭabkh", meaning: "cooking" },
     { word: "حَظّ", translit: "ḥaẓẓ", meaning: "luck" },
     { word: "بَصَر", translit: "baṣar", meaning: "eyesight" },
+    { word: "ضَرْب", translit: "ḍarb", meaning: "hitting" },
+    { word: "حِرْص", translit: "ḥirṣ", meaning: "eagerness" },
+    { word: "ضَجَر", translit: "ḍajar", meaning: "annoyance" },
+    { word: "صَخْر", translit: "ṣakhr", meaning: "rock" },
+    { word: "حِصَار", translit: "ḥiṣār", meaning: "siege" },
   ],
   5: [ // + ع غ ف ق (21 letters)
     { word: "فَجْر", translit: "fajr", meaning: "dawn (also a prayer name)" },
@@ -332,6 +349,11 @@ const LESSON_READING_WORDS = {
     { word: "عَرَب", translit: "ʿarab", meaning: "Arab(s)" },
     { word: "فَرَح", translit: "faraḥ", meaning: "joy" },
     { word: "غَضَب", translit: "ghaḍab", meaning: "anger" },
+    { word: "فَقْر", translit: "faqr", meaning: "poverty" },
+    { word: "غَرْب", translit: "gharb", meaning: "west" },
+    { word: "شَرْق", translit: "sharq", meaning: "east" },
+    { word: "فَرْق", translit: "farq", meaning: "difference" },
+    { word: "عَرْض", translit: "ʿarḍ", meaning: "width / offer" },
   ],
   6: [ // + ك ل م ن ه و ي — all 28 letters
     { word: "كَلْب", translit: "kalb", meaning: "dog" },
@@ -339,8 +361,41 @@ const LESSON_READING_WORDS = {
     { word: "نَهْر", translit: "nahr", meaning: "river" },
     { word: "لَوْن", translit: "lawn", meaning: "color" },
     { word: "وَجْه", translit: "wajh", meaning: "face" },
+    { word: "نَجْم", translit: "najm", meaning: "star" },
+    { word: "مَلِك", translit: "malik", meaning: "king" },
+    { word: "عِلْم", translit: "ʿilm", meaning: "knowledge" },
+    { word: "حَقّ", translit: "ḥaqq", meaning: "truth / right" },
+    { word: "جَبَل", translit: "jabal", meaning: "mountain" },
+    { word: "نُجُوم", translit: "nujūm", meaning: "stars (plural)" },
+    { word: "رَمَل", translit: "raml", meaning: "sand" },
   ],
 };
+
+/* Real-word reading practice for the orthography lessons (9-11) — these lessons used to be
+ * pure abstract drill tables (every letter × every mark) with no actual words to read. Each
+ * one now also shows real words that demonstrate the rule just learned. */
+const TANWEEN_WORDS = [
+  { word: "وَلَدٌ", translit: "waladun", meaning: "a boy" },
+  { word: "بِنْتٌ", translit: "bintun", meaning: "a girl" },
+  { word: "كَلْبٌ", translit: "kalbun", meaning: "a dog" },
+  { word: "جَبَلٌ", translit: "jabalun", meaning: "a mountain" },
+];
+const MADD_WORDS = [
+  { word: "كِتَاب", translit: "kitāb", meaning: "book (alif madd — ā)" },
+  { word: "سَلَام", translit: "salām", meaning: "peace (alif madd — ā)" },
+  { word: "نُور", translit: "nūr", meaning: "light (waw madd — ū)" },
+  { word: "حُضُور", translit: "ḥuḍūr", meaning: "presence (waw madd — ū)" },
+  { word: "كَبِير", translit: "kabīr", meaning: "big (ya madd — ī)" },
+  { word: "جَمِيل", translit: "jamīl", meaning: "beautiful (ya madd — ī)" },
+];
+const SUKUN_SHADDA_WORDS = [
+  { word: "بَرْد", translit: "bard", meaning: "cold (sukūn)" },
+  { word: "دَرْس", translit: "dars", meaning: "lesson (sukūn)" },
+  { word: "فَجْر", translit: "fajr", meaning: "dawn (sukūn)" },
+  { word: "حُبّ", translit: "ḥubb", meaning: "love (shadda)" },
+  { word: "سِرّ", translit: "sirr", meaning: "secret (shadda)" },
+  { word: "حَقّ", translit: "ḥaqq", meaning: "truth (shadda)" },
+];
 const LESSON_LETTER_COUNT = { 1: 5, 2: 9, 3: 13, 4: 17, 5: 21, 6: 28 };
 
 const TWO_LETTER_WORDS = [

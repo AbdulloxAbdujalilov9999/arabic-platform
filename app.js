@@ -427,14 +427,33 @@ const SENTENCES = [
   { word: "اَلْبِنْتُ جَمِيلَةٌ", translit: "al-bintu jamīlatun", meaning: "The girl is beautiful." },
   { word: "اَلسَّلَامُ عَلَيْكُمْ", translit: "as-salāmu ʿalaykum", meaning: "Peace be upon you — the standard Muslim greeting." },
 ];
-// Shortest-first: good beginner reading order. Al-Fātiḥah is last (longest/hardest of these
-// five) even though it's the single most important surah — by the time it comes up, the
-// other four have already built up some reading confidence.
+// Every short surah from the last part of the Qur'an (Juz 'Amma, the part beginners
+// traditionally start reciting from) — roughly shortest-first for a gentler ramp. Text itself
+// is always fetched live (never hand-typed); only the surah number and a display label are
+// hardcoded here. Al-Fātiḥah is last even though it's the single most important surah — by
+// the time it comes up, the other 21 have already built up real reading confidence.
 const SURAHS = [
   { number: 108, name: "Al-Kawthar" },
+  { number: 110, name: "An-Naṣr" },
+  { number: 103, name: "Al-ʿAṣr" },
   { number: 112, name: "Al-Ikhlāṣ" },
+  { number: 106, name: "Quraysh" },
+  { number: 111, name: "Al-Masad" },
   { number: 113, name: "Al-Falaq" },
+  { number: 105, name: "Al-Fīl" },
+  { number: 97, name: "Al-Qadr" },
   { number: 114, name: "An-Nās" },
+  { number: 109, name: "Al-Kāfirūn" },
+  { number: 107, name: "Al-Māʿūn" },
+  { number: 102, name: "At-Takāthur" },
+  { number: 99, name: "Az-Zalzalah" },
+  { number: 95, name: "At-Tīn" },
+  { number: 94, name: "Ash-Sharḥ" },
+  { number: 104, name: "Al-Humazah" },
+  { number: 101, name: "Al-Qāriʿah" },
+  { number: 100, name: "Al-ʿĀdiyāt" },
+  { number: 93, name: "Aḍ-Ḍuḥā" },
+  { number: 96, name: "Al-ʿAlaq" },
   { number: 1, name: "Al-Fātiḥah" },
 ];
 
